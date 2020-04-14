@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <title>Convert Text to HTML</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="form-group">
+            <label for="textBefore">Enter Plain Text</label>
+            <textarea class="form-control" id="textBefore" rows="10"></textarea>
+          </div>
+        </div>
+        <div class="col-sm-12">
+          <div class="form-group">
+            <button class="btn btn-primary" id="btn-convert">Convert</button>
+            <button class="btn btn-danger" id="btn-reset">Reset</button>
+          </div>
+        </div>
+        <div class="col-sm-12">
+          <div class="form-group">
+            <label for="textEnd">Converted HTML</label>
+            <textarea class="form-control" id="textEnd" rows="10"></textarea>
+          </div>
+        </div>
+        <div class="col-sm-12">
+          <div class="form-group">
+            <button class="btn btn-warning" id="btn-copy">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+<script type="text/javascript">
+  $('#btn-convert').click(function() {
+    var textBefore = $('#textBefore').val();
+    $('#textEnd').val(text2HTML(textBefore));
+  })
+  $('#btn-reset').click(function() {
+    $('#textBefore').val('');
+    $('#textEnd').val('');
+  })
+  $('#btn-copy').click(function() {
+    var copyText = document.getElementById('textEnd');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+  })
+  function text2HTML(text) {
+    var text = text.replace(/&/g, "&amp;").
+    replace(/</g, "&lt;").
+    replace(/>/g, "&gt;");
+    text = text.replace(/\r\n?|\n/g, "<br>");
+    text = text.replace(/<br>\s*<br>/g, "</p><p>");
+    text = "<p>" + text + "</p>";
+    return text;
+  }
+</script>
