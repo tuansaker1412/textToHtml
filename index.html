@@ -8,6 +8,50 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
   </head>
 
+  <style type="text/css" media="screen">
+    #svg_back_drop {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 1002;
+      display: none;
+    }
+    .svg-full-screen {
+      position: fixed;
+      width: 90vw;
+      height: 90vh;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1002;
+      background: #fff;
+    }
+    #close_svg {
+      position: fixed;
+      z-index: 1003;
+      top: 5vh;
+      right: calc(5vw + 10px);
+      cursor: pointer;
+      display: none;
+      font-size: 3em;
+      opacity: 0.6;
+    }
+    #play_svg {
+      position: fixed;
+      z-index: 1003;
+      top: 85vh;
+      right: 50%;
+      cursor: pointer;
+      display: none;
+      font-size: 3em;
+      opacity: 0.6;
+      color: #5cb85c;
+    }
+  </style>
+
   <body>
     <div class="container">
       <div class="row">
@@ -33,6 +77,20 @@
           <div class="form-group">
             <button class="btn btn-warning" id="btn-copy">Copy</button>
           </div>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="form-group">
+            <label for="contentSVG">SVG</label>
+            <textarea class="form-control" id="contentSVG" rows="3"></textarea>
+          </div>
+          <button class="btn btn-primary" id="addSVG">LoadSVG</button>
+        </div>
+        <div class="col-sm-12">
+          <div id="paragraph"></div>
         </div>
       </div>
     </div>
@@ -62,4 +120,150 @@
     text = "<p>" + text + "</p>";
     return text;
   }
+</script>
+<script type="text/javascript">
+$("#addSVG").click(function() {
+  var contentSVG = $("#contentSVG").val();
+  $("#paragraph").append(contentSVG);
+  $("svg").each(function() {
+    $(this).drawSVG();
+  });
+});
+$(document).ready(function() {
+  $.fn.drawSVG = function(autoplay) {
+    function _drawSVG(elems, index, pen) {
+      pen && pen.setAttribute('visibility','visible');
+      index = index == elems.length ? 0 : index;
+      index == 0 && elems.css("opacity", 0);
+      var elem = elems[index];
+      if(!$(elem).closest("body").length) return; // element has been removed
+
+      $(elem).css("opacity", 1);
+      var timeDraw = $(elem).data("time");
+      var length = elem.getTotalLength();
+      elem.style.strokeDasharray = length;
+      var isReverse = $(elem).data("reverse");
+      if(isReverse) {
+        elem.style.strokeDashoffset = -length;
+      } else {
+        elem.style.strokeDashoffset = length;
+      };
+      $(elem).animate({"strokeDashoffset": 0}, {
+        duration: timeDraw,
+        step: function(now, fx) {
+          if(!pen) return;
+          var point = this.getPointAtLength(isReverse ? - now : length -now);
+          pen.setAttribute('x', point.x);
+          pen.setAttribute('y', point.y - pen.getAttribute('height')/4);
+        },
+        complete: function() {
+          var last = index == elems.length - 1;
+          elems.current_timeout = setTimeout(function() {
+            _drawSVG(elems, index + 1, pen);
+          }, last ? 2000 : $(elem).data("delay") || 1000);
+          last && pen && pen.setAttribute('visibility','hidden');
+        },
+        easing: "linear"
+      });
+    };
+
+    $(this).each(function() {
+      $(this).css("cursor", "pointer");
+
+      var svgChildren = $(this).find("[data-time]");
+      svgChildren.css("opacity", 0);
+
+      if(svgChildren.length > 0) {
+        autoplay && _drawSVG(svgChildren, 0);
+
+        $(this).on("click", function() {
+          $("#svg_back_drop, #close_svg, #play_svg").show();
+          var clone = $(this).clone();
+          $("body").append(clone);
+          clone[0].classList.add("svg-full-screen");
+          clone.css("cursor", "auto")
+          var svgChildren = $(clone).find("[data-time]");
+          svgChildren.css("opacity", 0);
+
+          var pen = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+          pen.setAttribute('height', this.viewBox.baseVal.height || 100);
+          pen.setAttribute('width', this.viewBox.baseVal.height || 100);
+          pen.setAttribute('visibility','hidden');
+          var url_pen = window.location.href.replace('index.html', 'pencil_not_hand.png');
+          pen.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url_pen);
+
+          clone[0].appendChild(pen);
+          $("#play_svg").on("click", function() {
+            svgChildren.stop();
+            clearTimeout(svgChildren.current_timeout);
+            _drawSVG(svgChildren, 0, pen);
+          });
+        });
+      };
+    });
+  }
+  $(function() {
+    $("body").append("<div id='svg_back_drop'><div>");
+    $("body").append("<div id='play_svg'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class='fa fa-play-circle hidden'></i><div>");
+    $("body").append("<div id='close_svg'>×<div>");
+    $("#svg_back_drop, #close_svg").on("click", function () {
+      $("#svg_back_drop, #close_svg, #play_svg").hide();
+      $("#play_svg").unbind("click");
+      $(".svg-full-screen").remove();
+    })
+  })
+  $.fn.drawSVGWithPen = function() {
+    function _drawSVG(elems, index, pen) {
+      pen && pen.setAttribute('visibility','visible');
+      index = index == elems.length ? 0 : index;
+      index == 0 && elems.css("opacity", 0);
+      var elem = elems[index];
+      if(!$(elem).closest("body").length) return; // element has been removed
+
+      $(elem).css("opacity", 1);
+      var timeDraw = $(elem).data("time");
+      var length = elem.getTotalLength();
+      elem.style.strokeDasharray = length;
+      var isReverse = $(elem).data("reverse");
+      if(isReverse) {
+        elem.style.strokeDashoffset = -length;
+      } else {
+        elem.style.strokeDashoffset = length;
+      };
+      $(elem).animate({"strokeDashoffset": 0}, {
+        duration: timeDraw,
+        step: function(now, fx) {
+          if(!pen) return;
+          var point = this.getPointAtLength(isReverse ? - now : length -now);
+          pen.setAttribute('x', point.x);
+          pen.setAttribute('y', point.y - pen.getAttribute('height')/4);
+        },
+        complete: function() {
+          var last = index == elems.length - 1;
+          elems.current_timeout = setTimeout(function() {
+            _drawSVG(elems, index + 1, pen);
+          }, last ? 2000 : $(elem).data("delay") || 1000);
+          last && pen && pen.setAttribute('visibility','hidden');
+        },
+        easing: "linear"
+      });
+    };
+
+    $(this).each(function() {
+      var svgChildren = $(this).find("[data-time]");
+      svgChildren.css("opacity", 0);
+
+      var pen = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+      pen.setAttribute('height', 100);
+      pen.setAttribute('width', 100);
+      pen.setAttribute('visibility','hidden');
+      var url_pen = window.location.href.replace('index.html', 'pencil_not_hand.png');
+      pen.setAttributeNS('http://www.w3.org/1999/xlink', 'href', url_pen);
+
+      this.appendChild(pen);
+
+      if(svgChildren.length > 0) _drawSVG(svgChildren, 0, pen);
+    });
+  }
+});
 </script>
