@@ -152,8 +152,11 @@ $(document).ready(function() {
         duration: timeDraw,
         step: function(now, fx) {
           if(!pen) return;
-          var point = this.getPointAtLength(isReverse ? - now : length -now);
-          if(!point) return;
+          try {
+            var point = this.getPointAtLength(isReverse ? - now : length -now);
+          } catch (e) {
+            return;
+          }
           pen.setAttribute('x', point.x);
           pen.setAttribute('y', point.y - pen.getAttribute('height')/4);
         },
@@ -236,8 +239,11 @@ $(document).ready(function() {
         duration: timeDraw,
         step: function(now, fx) {
           if(!pen) return;
-          var point = this.getPointAtLength(isReverse ? - now : length -now);
-          if(!point) return;
+          try {
+            var point = this.getPointAtLength(isReverse ? - now : length -now);
+          } catch (e) {
+            return;
+          }
           pen.setAttribute('x', point.x);
           pen.setAttribute('y', point.y - pen.getAttribute('height')/4);
         },
